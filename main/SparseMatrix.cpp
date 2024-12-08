@@ -10,58 +10,50 @@ SparseMatrix::SparseMatrix(size_t n) {
     size = n;
     hRow = new NODE * [size];
     hCol = new NODE * [size];
-
-    if (!hRow || !hCol) {
-        cerr << "Ошибка выделения памяти!" << endl;
-        exit(1);
-    }
-
-    for (size_t i = 0; i < size; i++) {
-        hRow[i] = nullptr;
-        hCol[i] = nullptr;
-    }
 }
 
 
-// Деструктор
 SparseMatrix::~SparseMatrix() {
     for (int i = 0; i < size; ++i) {
-        // Удаляем строку
         if (hRow[i]) {
             NODE* curr = hRow[i];
-            NODE* start = hRow[i];
+            NODE* nextNode = nullptr;
 
-            do {
-                NODE* toDelete = curr;
-                curr = curr->nextright;
+            // Если в строке только один элемент
+            if (curr->nextright == curr) {
+                // Удаляем единственный элемент в строке
+                hRow[i] = nullptr; // Строка пустая
+                delete curr;
+            }
+            else {
+                // Если в строке несколько элементов
+                do {
+                    nextNode = curr->nextright; // Переход к следующему элементу
+                    // Убираем связи по столбцу
+                    if (curr->nextdown) {
+                        NODE* colCurr = hCol[curr->col];
+                        NODE* colPrev = nullptr;
 
-                // Убираем связи по столбцу
-                if (toDelete->nextdown) {
-                    NODE* colCurr = hCol[toDelete->col];
-                    NODE* colPrev = nullptr;
-
-                    do {
-                        if (colCurr == toDelete) {
-                            if (colPrev) {
-                                colPrev->nextdown = colCurr->nextdown;
+                        // Убираем связь в столбце
+                        while (colCurr != nullptr && colCurr != hCol[curr->col]) {
+                            if (colCurr == curr) {
+                                if (colPrev) {
+                                    colPrev->nextdown = colCurr->nextdown;
+                                }
+                                else {
+                                    hCol[curr->col] = colCurr->nextdown;
+                                }
+                                break;
                             }
-                            else {
-                                hCol[toDelete->col] = colCurr->nextdown;
-                            }
-                            break;
+                            colPrev = colCurr;
+                            colCurr = colCurr->nextdown;
                         }
-                        colPrev = colCurr;
-                        colCurr = colCurr->nextdown;
-                    } while (colCurr != hCol[toDelete->col]);
-                }
-
-                // Удаляем узел
-                if (curr == start) {
-                    hRow[i] = nullptr; // Если это последний элемент строки, делаем строку пустой
-                }
-                delete toDelete;
-
-            } while (curr != start);
+                    }
+                    delete curr;
+                    curr = nextNode; // Переход к следующему элементу
+                } while (curr != hRow[i]); // Прерывание цикла после удаления всех элементов строки
+                hRow[i] = nullptr; // Строка очищена
+            }
         }
     }
 
@@ -69,7 +61,9 @@ SparseMatrix::~SparseMatrix() {
     delete[] hCol;
 }
 
-// Метод добавления элемента
+
+
+
 void SparseMatrix::add(int val, int row, int col) {
     if (row >= size || col >= size || row < 0 || col < 0) {
         cout << "Ошибка: неверные координаты элемента!" << endl;
@@ -112,9 +106,12 @@ void SparseMatrix::add(int val, int row, int col) {
         do {
             prev = curr;
             curr = curr->nextright;
-        } while (curr != hRow[row] && curr->col < col);
 
-        if (curr->col == col) {
+            // Если дошли до начала строки снова (закольцованный список), значит цикл завершён
+            if (curr == hRow[row]) break;
+        } while (curr != nullptr && curr->col < col);
+
+        if (curr != hRow[row] && curr->col == col) {
             // Элемент уже существует, обновляем значение
             curr->data = val;
             delete newNode;
@@ -164,9 +161,12 @@ void SparseMatrix::add(int val, int row, int col) {
         do {
             prev = curr;
             curr = curr->nextdown;
-        } while (curr != hCol[col] && curr->row < row);
 
-        if (curr->row == row) {
+            // Если дошли до начала столбца снова (закольцованный список), значит цикл завершён
+            if (curr == hCol[col]) break;
+        } while (curr != nullptr && curr->row < row);
+
+        if (curr != hCol[col] && curr->row == row) {
             // Элемент уже существует, обновляем значение
             curr->data = val;
             delete newNode;
@@ -182,6 +182,8 @@ void SparseMatrix::add(int val, int row, int col) {
         }
     }
 }
+
+
 
 
 int SparseMatrix::get(int row, int col) const {
