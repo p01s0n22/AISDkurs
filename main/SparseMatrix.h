@@ -22,7 +22,7 @@ class SparseMatrix {
 public:
     SparseMatrix();
     SparseMatrix(size_t n);
-    ~SparseMatrix();
+   /* ~SparseMatrix();*/
     void add(int val, int row, int col);
     int get(int row, int col) const;
     void inputMatrix();

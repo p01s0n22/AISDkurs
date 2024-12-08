@@ -10,178 +10,131 @@ SparseMatrix::SparseMatrix(size_t n) {
     size = n;
     hRow = new NODE * [size];
     hCol = new NODE * [size];
-}
-
-
-SparseMatrix::~SparseMatrix() {
-    for (int i = 0; i < size; ++i) {
-        if (hRow[i]) {
-            NODE* curr = hRow[i];
-            NODE* nextNode = nullptr;
-
-            // Если в строке только один элемент
-            if (curr->nextright == curr) {
-                // Удаляем единственный элемент в строке
-                hRow[i] = nullptr; // Строка пустая
-                delete curr;
-            }
-            else {
-                // Если в строке несколько элементов
-                do {
-                    nextNode = curr->nextright; // Переход к следующему элементу
-                    // Убираем связи по столбцу
-                    if (curr->nextdown) {
-                        NODE* colCurr = hCol[curr->col];
-                        NODE* colPrev = nullptr;
-
-                        // Убираем связь в столбце
-                        while (colCurr != nullptr && colCurr != hCol[curr->col]) {
-                            if (colCurr == curr) {
-                                if (colPrev) {
-                                    colPrev->nextdown = colCurr->nextdown;
-                                }
-                                else {
-                                    hCol[curr->col] = colCurr->nextdown;
-                                }
-                                break;
-                            }
-                            colPrev = colCurr;
-                            colCurr = colCurr->nextdown;
-                        }
-                    }
-                    delete curr;
-                    curr = nextNode; // Переход к следующему элементу
-                } while (curr != hRow[i]); // Прерывание цикла после удаления всех элементов строки
-                hRow[i] = nullptr; // Строка очищена
-            }
-        }
+    for (size_t i = 0; i < size; i++) {
+        hRow[i] = nullptr;
+        hCol[i] = nullptr;
     }
-
-    delete[] hRow;
-    delete[] hCol;
 }
 
-
+//SparseMatrix::~SparseMatrix() {
+//    if (hRow) {
+//        for (int i = 0; i < size; i++) {
+//            NODE* current = hRow[i];
+//            if (current) {
+//                // Удаляем узлы в строке
+//                NODE* temp = nullptr;
+//                do {
+//                    temp = current->nextright;  // Сохраняем ссылку на следующий элемент
+//                    delete current;             // Удаляем текущий узел
+//                    current = temp;             // Переходим к следующему узлу
+//                } while (current != hRow[i]);  // Выход из цикла при достижении начала строки
+//            }
+//        }
+//    }
+//
+//    if (hCol) {
+//        for (int i = 0; i < size; i++) {
+//            NODE* current = hCol[i];
+//            if (current) {
+//                // Удаляем узлы в столбце
+//                NODE* temp = nullptr;
+//                do {
+//                    temp = current->nextdown;  // Сохраняем ссылку на следующий элемент
+//                    delete current;            // Удаляем текущий узел
+//                    current = temp;            // Переходим к следующему узлу
+//                } while (current != hCol[i]);  // Выход из цикла при достижении начала столбца
+//            }
+//        }
+//    }
+//
+//    delete[] hRow;
+//    delete[] hCol;
+//
+//    hRow = nullptr;
+//    hCol = nullptr;
+//    size = 0;
+//}
 
 
 void SparseMatrix::add(int val, int row, int col) {
+    if (val == 0) return; // Ничего не делаем, если значение равно 0
+
     if (row >= size || col >= size || row < 0 || col < 0) {
-        cout << "Ошибка: неверные координаты элемента!" << endl;
-        return;
+        throw std::out_of_range("Неверные координаты!");
     }
 
     NODE* newNode = new NODE(val, row, col);
 
-    // === Добавление в строку ===
-    if (!hRow[row]) {
-        // Строка пуста, добавляем первый элемент
+    // Добавление в строку
+    if (!hRow[row]) { // Если строка пустая
         hRow[row] = newNode;
-        newNode->nextright = newNode; // Закольцовываем список
-    }
-    else if (hRow[row]->nextright == hRow[row]) {
-        // Строка содержит один элемент
-        if (col < hRow[row]->col) {
-            // Новый элемент становится первым
-            newNode->nextright = hRow[row];
-            hRow[row]->nextright = newNode;
-            hRow[row] = newNode;
-        }
-        else if (col > hRow[row]->col) {
-            // Новый элемент становится последним
-            hRow[row]->nextright = newNode;
-            newNode->nextright = hRow[row];
-        }
-        else {
-            // Элемент уже существует, обновляем значение
-            hRow[row]->data = val;
-            delete newNode;
-            return;
-        }
+        newNode->nextright = newNode; // Циклическая связь
     }
     else {
-        // Строка содержит несколько элементов
-        NODE* curr = hRow[row];
+        NODE* current = hRow[row];
         NODE* prev = nullptr;
 
         do {
-            prev = curr;
-            curr = curr->nextright;
+            if (current->col == col) { // Если элемент с таким столбцом уже есть
+                current->data = val;  // Обновляем значение
+                delete newNode;       // Новый узел больше не нужен
+                return;
+            }
+            if (current->col > col) break; // Найдено место для вставки
+            prev = current;
+            current = current->nextright;
+        } while (current != hRow[row]);
 
-            // Если дошли до начала строки снова (закольцованный список), значит цикл завершён
-            if (curr == hRow[row]) break;
-        } while (curr != nullptr && curr->col < col);
+        if (prev == nullptr) { // Вставка в начало строки
+            newNode->nextright = current;
 
-        if (curr != hRow[row] && curr->col == col) {
-            // Элемент уже существует, обновляем значение
-            curr->data = val;
-            delete newNode;
-            return;
+            // Найти последний элемент для обновления его указателя
+            NODE* last = hRow[row];
+            while (last->nextright != hRow[row]) {
+                last = last->nextright;
+            }
+            last->nextright = newNode;
+            hRow[row] = newNode; // Обновляем голову
         }
-
-        prev->nextright = newNode;
-        newNode->nextright = curr;
-
-        if (curr == hRow[row] && col < hRow[row]->col) {
-            // Новый элемент становится первым
-            hRow[row] = newNode;
+        else { // Вставка между узлами
+            prev->nextright = newNode;
+            newNode->nextright = current;
         }
     }
 
-    // === Добавление в столбец ===
-    if (!hCol[col]) {
-        // Столбец пуст, добавляем первый элемент
+    // Добавление в столбец
+    if (!hCol[col]) { // Если столбец пустой
         hCol[col] = newNode;
-        newNode->nextdown = newNode; // Закольцовываем список
-    }
-    else if (hCol[col]->nextdown == hCol[col]) {
-        // Столбец содержит один элемент
-        if (row < hCol[col]->row) {
-            // Новый элемент становится первым
-            newNode->nextdown = hCol[col];
-            hCol[col]->nextdown = newNode;
-            hCol[col] = newNode;
-        }
-        else if (row > hCol[col]->row) {
-            // Новый элемент становится последним
-            hCol[col]->nextdown = newNode;
-            newNode->nextdown = hCol[col];
-        }
-        else {
-            // Элемент уже существует, обновляем значение
-            hCol[col]->data = val;
-            delete newNode;
-            return;
-        }
+        newNode->nextdown = newNode; // Циклическая связь
     }
     else {
-        // Столбец содержит несколько элементов
-        NODE* curr = hCol[col];
+        NODE* current = hCol[col];
         NODE* prev = nullptr;
 
         do {
-            prev = curr;
-            curr = curr->nextdown;
+            if (current->row > row) break; // Найдено место для вставки
+            prev = current;
+            current = current->nextdown;
+        } while (current != hCol[col]);
 
-            // Если дошли до начала столбца снова (закольцованный список), значит цикл завершён
-            if (curr == hCol[col]) break;
-        } while (curr != nullptr && curr->row < row);
+        if (prev == nullptr) { // Вставка в начало столбца
+            newNode->nextdown = current;
 
-        if (curr != hCol[col] && curr->row == row) {
-            // Элемент уже существует, обновляем значение
-            curr->data = val;
-            delete newNode;
-            return;
+            // Найти последний элемент для обновления его указателя
+            NODE* last = hCol[col];
+            while (last->nextdown != hCol[col]) {
+                last = last->nextdown;
+            }
+            last->nextdown = newNode;
+            hCol[col] = newNode; // Обновляем голову
         }
-
-        prev->nextdown = newNode;
-        newNode->nextdown = curr;
-
-        if (curr == hCol[col] && row < hCol[col]->row) {
-            // Новый элемент становится первым
-            hCol[col] = newNode;
+        else { // Вставка между узлами
+            prev->nextdown = newNode;
+            newNode->nextdown = current;
         }
     }
 }
+
 
 
 
