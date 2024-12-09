@@ -1,19 +1,15 @@
-﻿#include"SparseMatrix.h"
+﻿#include "SparseMatrix.h"
 
 int main() {
     SparseMatrix mat;
     int choice;
     system("chcp 1251");
     system("cls");
-    //SparseMatrix mat(5);
-    //mat.add(10, 1, 2);
-    //mat.add(20, 2, 3);
-    //mat.add(30, 1, 2); // Обновляет элемент (1, 2) на 30
-    //cout << mat;
 
     cout << "Выберите способ ввода матрицы:" << endl;
     cout << "1. Ввод полной матрицы вручную" << endl;
     cout << "2. Ввод матрицы из файла" << endl;
+    cout << "3. Генерация случайной матрицы" << endl;
     cin >> choice;
 
     if (choice == 1) {
@@ -25,6 +21,23 @@ int main() {
         cin >> filename;
         mat.inputFromFile(filename);
     }
+    else if (choice == 3) {
+        size_t size;
+        int density;
+
+        cout << "Введите размер матрицы: ";
+        cin >> size;
+        cout << "Сколько % матрицы будет заполнено: ";
+        cin >> density;
+
+        try {
+            mat.generateRandomMatrix(size, density);
+        }
+        catch (const std::exception& e) {
+            cerr << "Ошибка: " << e.what() << endl;
+            return 1;
+        }
+    }
     else {
         cout << "Неверный выбор!" << endl;
         return 1;
@@ -32,6 +45,15 @@ int main() {
 
     cout << "Ваша разреженная матрица:" << endl;
     cout << mat;
+
+    // Вычисление определителя
+    try {
+        int determinant = mat.determinant();
+        cout << "Определитель матрицы: " << determinant << endl;
+    }
+    catch (const std::exception& e) {
+        cerr << "Ошибка: " << e.what() << endl;
+    }
 
     return 0;
 }

@@ -1,4 +1,5 @@
-
+#include <cstdlib> 
+#include <ctime>  
 #include <iostream>
 #include <iomanip>
 #include <fstream>
@@ -37,6 +38,10 @@ public:
     void swapRows(int row1, int row2);
 
     SparseMatrix submatrix(int delRow, int delCol) const;
+
+    int determinant() const;
+
+    void generateRandomMatrix(size_t n, int density);
     
     friend ostream& operator<<(ostream& os, const SparseMatrix& matrix);
 }; 
