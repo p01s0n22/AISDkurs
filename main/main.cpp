@@ -1,4 +1,7 @@
 ﻿#include "SparseMatrix.h"
+#include <chrono>
+
+using namespace std::chrono;
 
 int main() {
     SparseMatrix mat;
@@ -48,8 +51,12 @@ int main() {
 
     // Вычисление определителя
     try {
+        auto start = high_resolution_clock::now();
         int determinant = mat.determinant();
+        auto end = high_resolution_clock::now();
+        duration<double> elapsed = end - start;
         cout << "Определитель матрицы: " << determinant << endl;
+        cout << "\nВремя: " << elapsed.count();
     }
     catch (const std::exception& e) {
         cerr << "Ошибка: " << e.what() << endl;

@@ -7,7 +7,7 @@
 using namespace std;
 
 class SparseMatrix {
-    class NODE {
+    struct NODE {
     public:
         int data;
         int row, col;
@@ -23,7 +23,11 @@ class SparseMatrix {
 public:
     SparseMatrix();
     SparseMatrix(size_t n);
-   /* ~SparseMatrix();*/
+    ~SparseMatrix();
+    SparseMatrix(const SparseMatrix& other);
+    SparseMatrix& operator=(const SparseMatrix& other);
+    void clear();
+    void copyFrom(const SparseMatrix& other);
     void add(int val, int row, int col);
     int get(int row, int col) const;
     void inputMatrix();

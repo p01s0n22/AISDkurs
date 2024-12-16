@@ -16,114 +16,145 @@ SparseMatrix::SparseMatrix(size_t n) {
     }
 }
 
-//SparseMatrix::~SparseMatrix() {
-//    if (hRow) {
-//        for (int i = 0; i < size; i++) {
-//            NODE* current = hRow[i];
-//            if (current) {
-//                // Удаляем узлы в строке
-//                NODE* temp = nullptr;
-//                do {
-//                    temp = current->nextright;  // Сохраняем ссылку на следующий элемент
-//                    delete current;             // Удаляем текущий узел
-//                    current = temp;             // Переходим к следующему узлу
-//                } while (current != hRow[i]);  // Выход из цикла при достижении начала строки
-//            }
-//        }
-//    }
-//
-//    if (hCol) {
-//        for (int i = 0; i < size; i++) {
-//            NODE* current = hCol[i];
-//            if (current) {
-//                // Удаляем узлы в столбце
-//                NODE* temp = nullptr;
-//                do {
-//                    temp = current->nextdown;  // Сохраняем ссылку на следующий элемент
-//                    delete current;            // Удаляем текущий узел
-//                    current = temp;            // Переходим к следующему узлу
-//                } while (current != hCol[i]);  // Выход из цикла при достижении начала столбца
-//            }
-//        }
-//    }
-//
-//    delete[] hRow;
-//    delete[] hCol;
-//
-//    hRow = nullptr;
-//    hCol = nullptr;
-//    size = 0;
-//}
+SparseMatrix::~SparseMatrix() {
+    clear();  // Корректно очищаем содержимое
+}
+
+void SparseMatrix::clear() {
+    if (!hRow || !hCol) return;
+
+    for (size_t i = 0; i < size; i++) {
+        if (hRow[i]) {
+            NODE* current = hRow[i];
+            do {
+                NODE* toDelete = current;
+                current = current->nextright;
+                delete toDelete;  // Удаляем узел
+            } while (current && current != hRow[i]);
+            hRow[i] = nullptr;
+        }
+    }
+
+    delete[] hRow;
+    delete[] hCol;
+    hRow = nullptr;
+    hCol = nullptr;
+    size = 0;
+}
+
+SparseMatrix::SparseMatrix(const SparseMatrix& other) {
+    size = other.size;
+    hRow = new NODE * [size]();
+    hCol = new NODE * [size]();
+    copyFrom(other);
+}
+
+SparseMatrix& SparseMatrix::operator=(const SparseMatrix& other) {
+    if (this == &other) return *this;
+
+    clear();       // Удаляем текущую память
+    size = other.size;
+    hRow = new NODE * [size]();
+    hCol = new NODE * [size]();
+    copyFrom(other); // Копируем новые данные
+
+    return *this;
+}
+
+void SparseMatrix::copyFrom(const SparseMatrix& other) {
+    if (other.size == 0) return;
+
+    for (size_t i = 0; i < other.size; i++) {
+        NODE* current = other.hRow[i];
+        if (!current) continue;
+
+        do {
+            add(current->data, current->row, current->col); // Создаём новые узлы
+            current = current->nextright;
+        } while (current != other.hRow[i]);
+    }
+}
 
 void SparseMatrix::add(int val, int row, int col) {
-    if (val == 0) return; 
+    if (val == 0) return;
 
     if (row >= size || col >= size || row < 0 || col < 0) {
         throw std::out_of_range("Неверные координаты!");
     }
-    NODE* newNode = new NODE(val, row, col);
-    if (!hRow[row]) { 
+
+    // Удаляем существующий узел, если он уже есть
+    NODE* current = hRow[row];
+    if (current) {
+        NODE* prev = nullptr;
+        do {
+            if (current->col == col) {
+                current->data = val; // Обновляем значение
+                return;
+            }
+            prev = current;
+            current = current->nextright;
+        } while (current && current != hRow[row]);
+    }
+
+    NODE* newNode = new NODE(val, row, col); // Создаём новый узел
+
+    // Вставка в строку
+    if (!hRow[row]) {
         hRow[row] = newNode;
-        newNode->nextright = newNode; 
+        newNode->nextright = newNode; // Создаём кольцевой список
     }
     else {
         NODE* current = hRow[row];
         NODE* prev = nullptr;
-
         do {
-            if (current->col == col) {
-                current->data = val;  
-                delete newNode;       
-                return;
-            }
-            if (current->col > col) break; 
+            if (current->col > col) break;
             prev = current;
             current = current->nextright;
-        } while (current != hRow[row]);
+        } while (current && current != hRow[row]);
 
-        if (prev == nullptr) { 
-            newNode->nextright = current;
+        if (!prev) {
             NODE* last = hRow[row];
-            while (last->nextright != hRow[row]) {
-                last = last->nextright;
-            }
+            while (last->nextright != hRow[row]) last = last->nextright;
+
+            newNode->nextright = hRow[row];
             last->nextright = newNode;
-            hRow[row] = newNode; 
+            hRow[row] = newNode;
         }
         else {
             prev->nextright = newNode;
             newNode->nextright = current;
         }
     }
-    if (!hCol[col]) { 
+
+    // Вставка в столбец
+    if (!hCol[col]) {
         hCol[col] = newNode;
         newNode->nextdown = newNode;
     }
     else {
         NODE* current = hCol[col];
         NODE* prev = nullptr;
-
         do {
-            if (current->row > row) break; 
+            if (current->row > row) break;
             prev = current;
             current = current->nextdown;
-        } while (current != hCol[col]);
+        } while (current && current != hCol[col]);
 
-        if (prev == nullptr) { 
-            newNode->nextdown = current;
+        if (!prev) {
             NODE* last = hCol[col];
-            while (last->nextdown != hCol[col]) {
-                last = last->nextdown;
-            }
+            while (last->nextdown != hCol[col]) last = last->nextdown;
+
+            newNode->nextdown = hCol[col];
             last->nextdown = newNode;
-            hCol[col] = newNode; 
+            hCol[col] = newNode;
         }
-        else { 
+        else {
             prev->nextdown = newNode;
             newNode->nextdown = current;
         }
     }
 }
+
 
 int SparseMatrix::get(int row, int col) const {
     if (row >= size || col >= size || row < 0 || col < 0) {
@@ -340,7 +371,8 @@ int SparseMatrix::determinant() const {
             int factor = copy.get(row, col);
             if (factor != 0) {
                 for (int i = col; i < size; i++) {
-                    int value = copy.get(row, i) - factor * copy.get(col, i) / pivot;
+                    int value = copy.get(row, i) - factor * copy.get(col, i);  // Убираем деление
+
                     copy.add(value, row, i);
                 }
             }
