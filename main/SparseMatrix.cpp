@@ -17,7 +17,7 @@ SparseMatrix::SparseMatrix(size_t n) {
 }
 
 SparseMatrix::~SparseMatrix() {
-    clear();  // Корректно очищаем содержимое
+    clear();  
 }
 
 void SparseMatrix::clear() {
@@ -29,7 +29,7 @@ void SparseMatrix::clear() {
             do {
                 NODE* toDelete = current;
                 current = current->nextright;
-                delete toDelete;  // Удаляем узел
+                delete toDelete; 
             } while (current && current != hRow[i]);
             hRow[i] = nullptr;
         }
