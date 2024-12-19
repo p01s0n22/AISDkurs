@@ -14,7 +14,7 @@ class SparseMatrix {
         NODE* nextdown;
         NODE* nextright;
 
-        NODE(int v, int r, int c) : data(v), row(r), col(c), nextdown(nullptr), nextright(nullptr) {}
+        NODE(double v, int r, int c) : data(v), row(r), col(c), nextdown(nullptr), nextright(nullptr) {}
     };
     NODE** hRow;
     NODE** hCol;
@@ -28,8 +28,8 @@ public:
     SparseMatrix& operator=(const SparseMatrix& other);
     void clear();
     void copyFrom(const SparseMatrix& other);
-    void add(int val, int row, int col);
-    int get(int row, int col) const;
+    void add(double val, int row, int col);
+    double get(int row, int col) const;
     void inputMatrix();
     void inputFromFile(const char* filename);
 
@@ -43,7 +43,7 @@ public:
 
     SparseMatrix submatrix(int delRow, int delCol) const;
 
-    int determinant() const;
+    double determinant() const;
 
     void generateRandomMatrix(size_t n, int density);
     

@@ -75,7 +75,7 @@ void SparseMatrix::copyFrom(const SparseMatrix& other) {
     }
 }
 
-void SparseMatrix::add(int val, int row, int col) {
+void SparseMatrix::add(double val, int row, int col) {
     if (val == 0) return;
 
     if (row >= size || col >= size || row < 0 || col < 0) {
@@ -156,7 +156,7 @@ void SparseMatrix::add(int val, int row, int col) {
 }
 
 
-int SparseMatrix::get(int row, int col) const {
+double SparseMatrix::get(int row, int col) const {
     if (row >= size || col >= size || row < 0 || col < 0) {
         cout << "Ошибка в координатах" << endl;
         return 0;
@@ -305,7 +305,7 @@ SparseMatrix SparseMatrix::operator*(const SparseMatrix& other) const {
     SparseMatrix result(size);
     for (size_t i = 0; i < size; i++) {
         for (size_t j = 0; j < size; j++) {
-            int sum = 0;
+            double sum = 0;
             NODE* currentA = hRow[i];
             while (currentA) {
                 NODE* currentB = other.hCol[j];
@@ -366,7 +366,7 @@ SparseMatrix SparseMatrix::submatrix(int delRow, int delCol) const {
         for (size_t j = 0, newCol = 0; j < size; j++) {
             if (j == delCol) continue; 
 
-            int value = get(i, j);
+            double value = get(i, j);
             if (value != 0) {
                 result.add(value, newRow, newCol); 
             }
@@ -378,14 +378,23 @@ SparseMatrix SparseMatrix::submatrix(int delRow, int delCol) const {
     return result;
 }
 
-int SparseMatrix::determinant() const {
-    if (size == 0) return 0;  
-    if (size == 1) return get(0, 0); 
+double SparseMatrix::determinant() const {
+    if (size == 0) return 0;
+    if (size == 1) return get(0, 0);
 
-    SparseMatrix A(*this);  
-    int sign = 1; 
+    SparseMatrix A(*this); // Копируем текущую матрицу
+    double sign = 1.0;
+
+    std::cout << "Начальная матрица:\n";
+    for (size_t i = 0; i < size; ++i) {
+        for (size_t j = 0; j < size; ++j) {
+            std::cout << A.get(i, j) << " ";
+        }
+        std::cout << "\n";
+    }
 
     for (size_t i = 0; i < size; i++) {
+        // Поиск строки с максимальным элементом в текущем столбце
         int maxRow = i;
         for (size_t r = i + 1; r < size; r++) {
             if (std::abs(A.get(r, i)) > std::abs(A.get(maxRow, i))) {
@@ -393,32 +402,66 @@ int SparseMatrix::determinant() const {
             }
         }
 
-        if (A.get(maxRow, i) == 0) {
-            return 0;  
+        // Если в текущем столбце все элементы равны 0, определитель равен 0
+        if (A.get(maxRow, i) == 0.0) {
+            std::cout << "Столбец " << i << " состоит из нулей, определитель = 0.\n";
+            return 0.0;
         }
+
+        // Перестановка строк
         if (maxRow != i) {
             A.swapRows(maxRow, i);
-            sign *= -1;  
+            sign *= -1.0; // Перестановка строк меняет знак определителя
+            std::cout << "Поменяли местами строки " << i << " и " << maxRow << ":\n";
+            for (size_t i = 0; i < size; ++i) {
+                for (size_t j = 0; j < size; ++j) {
+                    std::cout << A.get(i, j) << " ";
+                }
+                std::cout << "\n";
+            }
         }
-        for (size_t j = i + 1; j < size; j++) {
-            if (A.get(j, i) != 0) {  
-                double factor = static_cast<double>(A.get(j, i)) / A.get(i, i);
 
-                for (size_t k = i; k < size; k++) {
-                    int newValue = A.get(j, k) - static_cast<int>(factor * A.get(i, k));
-                    A.add(newValue, j, k);  
+        // Прямой ход метода Гаусса: обнуляем все элементы в текущем столбце ниже диагонали
+        for (size_t j = i + 1; j < size; j++) {
+            if (A.get(j, i) != 0.0) {
+                double factor = A.get(j, i) / A.get(i, i);
+                std::cout << "Обнуляем элемент A(" << j << ", " << i << "), коэффициент: " << factor << "\n";
+
+                // Вычитание строки i из строки j с коэффициентом
+                for (size_t k = 0; k < size; k++) {
+                    double newValue = A.get(j, k) - factor * A.get(i, k);
+                    if (std::abs(newValue) < 1e-9) newValue = 0.0;
+                    A.add(newValue, j, k); // Обновляем значение в матрице
+                }
+
+                std::cout << "Матрица после вычитания строки " << i << " из строки " << j << ":\n";
+                for (size_t i = 0; i < size; ++i) {
+                    for (size_t j = 0; j < size; ++j) {
+                        std::cout << A.get(i, j) << " ";
+                    }
+                    std::cout << "\n";
                 }
             }
         }
     }
-    int det = sign;
+
+    // Вычисляем произведение диагональных элементов
+    double det = sign;
     for (size_t i = 0; i < size; i++) {
         det *= A.get(i, i);
     }
 
+    std::cout << "Итоговая верхнетреугольная матрица:\n";
+    for (size_t i = 0; i < size; ++i) {
+        for (size_t j = 0; j < size; ++j) {
+            std::cout << A.get(i, j) << " ";
+        }
+        std::cout << "\n";
+    }
+    std::cout << "Определитель = " << det << "\n";
+
     return det;
 }
-
 
 
 void SparseMatrix::generateRandomMatrix(size_t n, int density) {
