@@ -17,7 +17,7 @@ SparseMatrix::SparseMatrix(size_t n) {
 }
 
 SparseMatrix::~SparseMatrix() {
-    clear();  
+    clear();
 }
 
 void SparseMatrix::clear() {
@@ -152,6 +152,7 @@ void SparseMatrix::inputMatrix() {
     }
     *this = SparseMatrix(n);
 
+
     cout << "Введите матрицу построчно (включая нули):" << endl;
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
@@ -162,35 +163,6 @@ void SparseMatrix::inputMatrix() {
             }
         }
     }
-}
-
-void SparseMatrix::inputFromFile(const char* filename) {
-    ifstream file(filename);
-    if (!file) {
-        cerr << "Ошибка открытия файла!" << endl;
-        return;
-    }
-
-    int n;
-    file >> n;
-    if (n <= 0) {
-        cout << "Размер матрицы должен быть положительным!" << endl;
-        return;
-    }
-    *this = SparseMatrix(n);
-    cout << "Считывание матрицы из файла..." << endl;
-    for (int i = 0; i < n; i++) {
-        for (int j = 0; j < n; j++) {
-            int value;
-            file >> value;
-            if (value != 0) {
-                add(value, i, j);
-            }
-        }
-    }
-
-    file.close();
-    cout << "Матрица успешно считана." << endl;
 }
 
 SparseMatrix SparseMatrix::operator+(const SparseMatrix& other) const {
@@ -284,6 +256,7 @@ SparseMatrix SparseMatrix::operator*(const SparseMatrix& other) const {
 
     for (int i = 0; i < size; i++) {
         NODE* thisRow = hRow[i];
+
 
         while (thisRow != nullptr) {
             NODE* otherCol = other.hCol[thisRow->col];
@@ -413,6 +386,7 @@ double SparseMatrix::determinant() const {
         det *= pivot; // Умножаем на диагональный элемент
         cout << "Пивотное значение для столбца " << col << " равно " << pivot << endl;
 
+
         // Преобразуем строки ниже текущей
         for (int row = col + 1; row < size; ++row) {
             double coeff = matrix[row][col] / pivot;
@@ -494,4 +468,3 @@ ostream& operator<<(ostream& os, const SparseMatrix& matrix) {
     }
     return os;
 }
-
