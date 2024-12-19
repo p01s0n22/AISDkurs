@@ -27,7 +27,6 @@ void SparseMatrix::clear() {
             while (current != nullptr) {
                 NODE* temp = current;
                 current = current->nextright;
-                cout << "Deleting node at (" << temp->row << ", " << temp->col << ")" << endl;  // Логируем удаление
                 delete temp;
             }
         }
@@ -343,15 +342,7 @@ double SparseMatrix::determinant() const {
     double det = 1.0; // Начальное значение определителя
     int swapCount = 0; // Счетчик перестановок строк
 
-    cout << "Начинаем вычисление детерминанта..." << endl;
-
     for (int col = 0; col < size; ++col) {
-        cout << "Обрабатываем столбец " << col << endl;
-
-        // Вывод текущего столбца
-        for (int row = 0; row < size; ++row) {
-            cout << "Элемент в строке " << row << ", столбце " << col << ": " << matrix[row][col] << endl;
-        }
 
         // Поиск строки с максимальным абсолютным значением в текущем столбце
         int maxRow = col;
@@ -362,9 +353,6 @@ double SparseMatrix::determinant() const {
                 maxVal = abs(matrix[row][col]);
             }
         }
-
-        cout << "Максимальный элемент в столбце " << col << " находится в строке " << maxRow
-            << " со значением " << matrix[maxRow][col] << endl;
 
         // Если максимальный элемент равен 0, определитель равен 0
         if (maxVal == 0) {
@@ -378,15 +366,12 @@ double SparseMatrix::determinant() const {
         if (maxRow != col) {
             swap(matrix[maxRow], matrix[col]);
             swapCount++;
-            cout << "Меняем строки местами: строка " << col << " и строка " << maxRow << endl;
         }
 
         // Пивотное значение
         double pivot = matrix[col][col];
         det *= pivot; // Умножаем на диагональный элемент
-        cout << "Пивотное значение для столбца " << col << " равно " << pivot << endl;
-
-
+        
         // Преобразуем строки ниже текущей
         for (int row = col + 1; row < size; ++row) {
             double coeff = matrix[row][col] / pivot;
@@ -394,19 +379,12 @@ double SparseMatrix::determinant() const {
             for (int j = col + 1; j < size; ++j) {
                 matrix[row][j] -= coeff * matrix[col][j];
             }
-            cout << "Вычисляем коэффициент для строки " << row << ": " << coeff << endl;
-            for (int j = col + 1; j < size; ++j) {
-                cout << "Обновляем элемент в строке " << row << ", столбце " << j
-                    << " на " << matrix[row][j] << endl;
-            }
         }
-        cout << "После обработки столбца " << col << ", детерминант: " << det << endl;
     }
 
     // Учет перестановок строк
     if (swapCount % 2 != 0) {
         det = -det;
-        cout << "Нечетное количество перестановок строк, изменяем знак детерминанта." << endl;
     }
 
     // Освобождение памяти
@@ -414,8 +392,6 @@ double SparseMatrix::determinant() const {
         delete[] matrix[i];
     }
     delete[] matrix;
-
-    cout << "Конечный определитель: " << det << endl;
 
     // Проверка малого значения
     if (abs(det) < 1e-12) {
