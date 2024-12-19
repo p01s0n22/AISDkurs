@@ -402,45 +402,56 @@ double SparseMatrix::determinant() const {
     return det;
 }
 
-
-
-
 void SparseMatrix::generateRandomMatrix(size_t n, int density) {
-    size = n;
-    hRow = new NODE * [n];
-    hCol = new NODE * [n];
-    for (int i = 0; i < n; i++) {
-        hRow[i] = nullptr;
-        hCol[i] = nullptr;
+    if (density < 1 || density > 100) {
+        throw std::invalid_argument("Плотность должна быть в диапазоне от 1 до 100.");
     }
 
-    srand(time(0));
+    *this = SparseMatrix(n);
+    srand(static_cast<unsigned>(time(nullptr)));
 
-    for (int i = 0; i < n; i++) {
-        for (int j = 0; j < n; j++) {
-            if (rand() % 100 < density) { // С вероятностью density заполняем элементы
-                double value = (rand() % 100) + 1;
-                add(value, i, j);
-            }
+    int totalElements = n * n * density / 100;
+
+    bool** used = new bool* [n];
+    for (size_t i = 0; i < n; i++) {
+        used[i] = new bool[n]();
+    }
+
+    for (int i = 0; i < totalElements;) {
+        int row = rand() % n;
+        int col = rand() % n;
+
+        if (!used[row][col]) {
+            int value = rand() % 100 + 1;
+            add(value, row, col);
+            used[row][col] = true;
+            i++;
         }
     }
+
+    for (size_t i = 0; i < n; i++) {
+        delete[] used[i];
+    }
+    delete[] used;
 }
+
 
 
 
 ostream& operator<<(ostream& os, const SparseMatrix& matrix) {
-    for (int i = 0; i < matrix.size; i++) {
-        SparseMatrix::NODE* current = matrix.hRow[i]; // Объявляем указатель на текущую строку
-        for (int j = 0; j < matrix.size; j++) {
-            if (current && current->col == j) { // Если нашли элемент в текущей строке
-                os << setw(5) << current->data;
-                current = current->nextright; // Переходим к следующему элементу в строке
+    for (size_t i = 0; i < matrix.size; i++) {
+        SparseMatrix::NODE* current = matrix.hRow[i];
+        for (size_t j = 0; j < matrix.size; j++) {
+            if (current && current->col == j) {
+                os << setw(3) << current->data << " ";
+                current = current->nextright; // Переход к следующему элементу
             }
             else {
-                os << setw(5) << 0; // Если элемент отсутствует, выводим 0
+                os << setw(3) << 0 << " ";
             }
         }
-        os << endl; // Переход на новую строку после вывода всех столбцов
+        os << std::endl;
     }
     return os;
 }
+
