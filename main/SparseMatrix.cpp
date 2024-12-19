@@ -365,7 +365,7 @@ double SparseMatrix::determinant() const {
 
 void SparseMatrix::generateRandomMatrix(size_t n, int density) {
     if (density < 1 || density > 100) {
-        throw std::invalid_argument("Ïëîòíîñòü äîëæíà áûòü â äèàïàçîíå îò 1 äî 100.");
+        throw std::invalid_argument("Число должно быть от 1 до 100.");
     }
     *this = SparseMatrix(n);
     srand(static_cast<unsigned>(time(nullptr)));
