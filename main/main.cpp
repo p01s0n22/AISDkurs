@@ -11,20 +11,13 @@ int main() {
 
     cout << "Выберите способ ввода матрицы:" << endl;
     cout << "1. Ввод полной матрицы вручную" << endl;
-    cout << "2. Ввод матрицы из файла" << endl;
-    cout << "3. Генерация случайной матрицы" << endl;
+    cout << "2. Генерация случайной матрицы" << endl;
     cin >> choice;
 
     if (choice == 1) {
         mat.inputMatrix();
     }
     else if (choice == 2) {
-        char filename[100];
-        cout << "Введите имя файла: ";
-        cin >> filename;
-        mat.inputFromFile(filename);
-    }
-    else if (choice == 3) {
         size_t size;
         int density;
 

@@ -157,34 +157,6 @@ void SparseMatrix::inputMatrix() {
     }
 }
 
-void SparseMatrix::inputFromFile(const char* filename) {
-    ifstream file(filename);
-    if (!file) {
-        cerr << "Ошибка открытия файла!" << endl;
-        return;
-    }
-
-    int n;
-    file >> n;
-    if (n <= 0) {
-        cout << "Размер матрицы должен быть положительным!" << endl;
-        return;
-    }
-    *this = SparseMatrix(n);
-    cout << "Считывание матрицы из файла..." << endl;
-    for (int i = 0; i < n; i++) {
-        for (int j = 0; j < n; j++) {
-            int value;
-            file >> value;
-            if (value != 0) {
-                add(value, i, j);
-            }
-        }
-    }
-
-    file.close();
-    cout << "Матрица успешно считана." << endl;
-}
 
 SparseMatrix SparseMatrix::operator+(const SparseMatrix& other) const {
     if (size != other.size) {
@@ -360,28 +332,36 @@ double SparseMatrix::determinant() const {
     return det;
 }
 
-
-
 void SparseMatrix::generateRandomMatrix(size_t n, int density) {
     if (density < 1 || density > 100) {
-        throw std::invalid_argument("Ïëîòíîñòü äîëæíà áûòü â äèàïàçîíå îò 1 äî 100.");
+        throw std::invalid_argument("Плотность должна быть в диапазоне от 1 до 100.");
     }
-    *this = SparseMatrix(n); 
+
+    *this = SparseMatrix(n);
     srand(static_cast<unsigned>(time(nullptr)));
 
-    int totalElements = n * n * density / 100; 
+    int totalElements = n * n * density / 100;
 
-    for (int i = 0; i < totalElements; i++) {
-        int row = rand() % n;      
-        int col = rand() % n;            
-        int value = rand() % 100 + 1;   
-        if (get(row, col) == 0) {
+    bool** used = new bool* [n];
+    for (size_t i = 0; i < n; i++) {
+        used[i] = new bool[n]();
+    }
+
+    for (int i = 0; i < totalElements;) {
+        int row = rand() % n;
+        int col = rand() % n;
+
+        if (!used[row][col]) {
+            int value = rand() % 100 + 1;
             add(value, row, col);
-        }
-        else {
-            i--; 
+            used[row][col] = true;
+            i++;
         }
     }
+    for (size_t i = 0; i < n; i++) {
+        delete[] used[i];
+    }
+    delete[] used;
 }
 
 
@@ -390,27 +370,15 @@ ostream& operator<<(ostream& os, const SparseMatrix& matrix) {
     for (size_t i = 0; i < matrix.size; i++) {
         SparseMatrix::NODE* current = matrix.hRow[i];
         for (size_t j = 0; j < matrix.size; j++) {
-            bool found = false;
-
-            // Если строка не пустая, начинаем обход
-            if (current) {
-                do {
-                    if (current->col == j) {
-                        os << setw(3) << current->data << " ";
-                        found = true;
-                        current = current->nextright;
-                        break; // Прерываем, если нашли нужный элемент
-                    }
-                    current = current->nextright;
-                } while (current != matrix.hRow[i] && current != nullptr); // Обрабатываем пустые строки
+            if (current && current->col == j) {
+                os << setw(3) << current->data << " ";
+                current = current->nextright; // Переход к следующему элементу
             }
-
-            // Если элемент не найден в строке, выводим 0
-            if (!found) {
+            else {
                 os << setw(3) << 0 << " ";
             }
         }
-        os << endl;
+        os << std::endl;
     }
     return os;
 }

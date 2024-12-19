@@ -31,7 +31,6 @@ public:
     void add(double val, int row, int col);
     double get(int row, int col) const;
     void inputMatrix();
-    void inputFromFile(const char* filename);
 
     SparseMatrix operator+(const SparseMatrix& other) const;
 
