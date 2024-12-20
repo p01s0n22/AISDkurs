@@ -42,10 +42,6 @@ void SparseMatrix::clear() {
     size = 0;  // Обнуляем размер
 }
 
-
-
-
-
 SparseMatrix::SparseMatrix(const SparseMatrix& other) {
     size = other.size;
     hRow = new NODE * [size]();
@@ -81,7 +77,7 @@ void SparseMatrix::copyFrom(const SparseMatrix& other) {
     }
 }
 
-void SparseMatrix::add(double val, int row, int col) {
+void SparseMatrix::add(int val, int row, int col) {
     if (row < 0 || col < 0 || row >= size || col >= size)
         throw std::out_of_range("Invalid row or column index");
 
@@ -117,7 +113,7 @@ void SparseMatrix::add(double val, int row, int col) {
 
 
 
-double SparseMatrix::get(int row, int col) const {
+int SparseMatrix::get(int row, int col) const {
     if (row >= size || col >= size || row < 0 || col < 0) {
         cout << "Ошибка в координатах" << endl;
         return 0;
@@ -323,84 +319,106 @@ SparseMatrix SparseMatrix::submatrix(int delRow, int delCol) const {
     return result;
 }
 
-
-double SparseMatrix::determinant() const {
-    if (size == 0) {
-        cout << "Матрица пуста." << endl;
-        return 0;
+SparseMatrix::NODE* SparseMatrix::getElement(int row, int col) const {
+    if (row < 0 || col < 0 || row >= size || col >= size) {
+        throw std::out_of_range("Invalid row or column index");
     }
 
-    // Копируем матрицу в массив для выполнения операций
-    double** matrix = new double* [size];
-    for (int i = 0; i < size; ++i) {
-        matrix[i] = new double[size];
-        for (int j = 0; j < size; ++j) {
-            matrix[i][j] = get(i, j);
+    // Поиск нужного элемента в строке
+    NODE* current = hRow[row];
+    while (current != nullptr) {
+        if (current->col == col) {
+            return current;  // Возвращаем указатель на элемент
         }
+        current = current->nextright;
     }
 
-    double det = 1.0; // Начальное значение определителя
-    int swapCount = 0; // Счетчик перестановок строк
-
-    for (int col = 0; col < size; ++col) {
-
-        // Поиск строки с максимальным абсолютным значением в текущем столбце
-        int maxRow = col;
-        double maxVal = abs(matrix[col][col]);
-        for (int row = col + 1; row < size; ++row) {
-            if (abs(matrix[row][col]) > maxVal) {
-                maxRow = row;
-                maxVal = abs(matrix[row][col]);
-            }
-        }
-
-        // Если максимальный элемент равен 0, определитель равен 0
-        if (maxVal == 0) {
-            cout << "Все элементы в столбце " << col << " нулевые, определитель равен 0." << endl;
-            for (int i = 0; i < size; ++i) delete[] matrix[i];
-            delete[] matrix;
-            return 0;
-        }
-
-        // Перестановка строк, если максимальный элемент не в текущей строке
-        if (maxRow != col) {
-            swap(matrix[maxRow], matrix[col]);
-            swapCount++;
-        }
-
-        // Пивотное значение
-        double pivot = matrix[col][col];
-        det *= pivot; // Умножаем на диагональный элемент
-        
-        // Преобразуем строки ниже текущей
-        for (int row = col + 1; row < size; ++row) {
-            double coeff = matrix[row][col] / pivot;
-            matrix[row][col] = 0; // Элемент ниже диагонали становится 0
-            for (int j = col + 1; j < size; ++j) {
-                matrix[row][j] -= coeff * matrix[col][j];
-            }
-        }
-    }
-
-    // Учет перестановок строк
-    if (swapCount % 2 != 0) {
-        det = -det;
-    }
-
-    // Освобождение памяти
-    for (int i = 0; i < size; ++i) {
-        delete[] matrix[i];
-    }
-    delete[] matrix;
-
-    // Проверка малого значения
-    if (abs(det) < 1e-12) {
-        cout << "Определитель слишком мал, округляем до 0." << endl;
-        return 0;
-    }
-
-    return det;
+    return nullptr;  // Если элемент не найден, возвращаем nullptr
 }
+
+double SparseMatrix::determinant() {
+    if (size == 0) return 1; // Пустая матрица
+    double det = 1;          // Начальное значение определителя
+    int sign = 1;            // Знак определителя, меняется при перестановках строк
+
+    int j = 0; // Номер текущего столбца
+    for (int i = 0; i < size - 1; ++i) {
+        NODE* firstElement = getElement(i, j); // Ведущий элемент
+        while (firstElement == nullptr) {
+            bool swapped = false;
+
+            // Поиск строки для перестановки
+            for (int next_i = i + 1; next_i < size; ++next_i) {
+                if (getElement(next_i, j) != nullptr) {
+                    swapRows(i, next_i); // Перестановка строк
+                    sign *= -1;              // Изменяем знак определителя
+                    swapped = true;
+                    break;
+                }
+            }
+
+            if (!swapped) {
+                ++j; // Если столбец пустой, переходим к следующему
+                if (j >= size) return 0; // Матрица вырождена
+                firstElement = getElement(i, j);
+            }
+            else {
+                firstElement = getElement(i, j);
+            }
+        }
+
+        // Приведение нижележащих строк
+        for (int r = i + 1; r < size; ++r) {
+            NODE* temp = getElement(r, j);
+            if (temp == nullptr) continue; // Пропускаем, если элемент нулевой
+
+            // Вычисляем коэффициент для обнуления
+            double coeff = -temp->value / firstElement->value;
+            additionWithString(coeff, r, i); // Вычитаем строку i из строки r
+        }
+
+        ++j; // Переходим к следующему столбцу
+    }
+
+    // Умножаем диагональные элементы
+    for (int i = 0; i < size; ++i) {
+        NODE* diag = getElement(i, i);
+        if (diag == nullptr) return 0; // Нулевой элемент на диагонали => определитель равен 0
+        det *= diag->value;
+    }
+
+    return det * sign; // Возвращаем определитель с учетом перестановок
+}
+
+
+
+void SparseMatrix::additionWithString(int factor, int rowDest, int rowSource) {
+    NODE* dest = hRow[rowDest];
+    NODE* source = hRow[rowSource];
+
+    while (dest != nullptr && source != nullptr) {
+        if (dest->col == source->col) {
+            dest->data += factor * source->data;  // Вычитание с коэффициентом
+            dest = dest->nextright;
+            source = source->nextright;
+        }
+        else if (dest->col < source->col) {
+            dest = dest->nextright;
+        }
+        else {
+            source = source->nextright;
+        }
+    }
+}
+
+void SparseMatrix::multiplicationByNumber(int factor, int row) {
+    NODE* current = hRow[row];
+    while (current != nullptr) {
+        current->data *= factor;  // Умножаем значение на коэффициент
+        current = current->nextright;
+    }
+}
+
 
 void SparseMatrix::generateRandomMatrix(size_t n, int density) {
     if (density < 1 || density > 100) {
@@ -426,6 +444,7 @@ void SparseMatrix::generateRandomMatrix(size_t n, int density) {
             add(value, row, col);
             used[row][col] = true;
             i++;
+            std::cout << "Добавлено: " << value << " в позицию (" << row << ", " << col << ")\n";
         }
     }
 

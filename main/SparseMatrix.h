@@ -28,8 +28,8 @@ public:
     SparseMatrix& operator=(const SparseMatrix& other);
     void clear();
     void copyFrom(const SparseMatrix& other);
-    void add(double val, int row, int col);
-    double get(int row, int col) const;
+    void add(int val, int row, int col);
+    int get(int row, int col) const;
     void inputMatrix();
 
     SparseMatrix operator+(const SparseMatrix& other) const;
@@ -42,7 +42,13 @@ public:
 
     SparseMatrix submatrix(int delRow, int delCol) const;
 
-    double determinant() const;
+    SparseMatrix::NODE* getElement(int row, int col) const;
+
+    int determinant() const;
+
+    void additionWithString(int factor, int rowDest, int rowSource);
+
+    void multiplicationByNumber(int factor, int row);
 
     void generateRandomMatrix(size_t n, int density);
     
