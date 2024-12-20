@@ -1,11 +1,16 @@
 ﻿#include "SparseMatrix.h"
 #include <chrono>
+#include <iostream>
+#include <iomanip>
 
 using namespace std::chrono;
+using namespace std;
 
 int main() {
     SparseMatrix mat;
     int choice;
+
+    // Устанавливаем кодировку для корректного отображения русских символов
     system("chcp 1251");
     system("cls");
 
@@ -23,7 +28,7 @@ int main() {
 
         cout << "Введите размер матрицы: ";
         cin >> size;
-        cout << "Сколько % матрицы будет заполнено: ";
+        cout << "Сколько % матрицы будет заполнено (от 1 до 100): ";
         cin >> density;
 
         try {
@@ -40,7 +45,7 @@ int main() {
     }
 
     cout << "Ваша разреженная матрица:" << endl;
-    cout << mat;
+    cout << mat << endl;
 
     // Вычисление определителя
     try {
@@ -48,8 +53,9 @@ int main() {
         double determinant = mat.determinant();
         auto end = high_resolution_clock::now();
         duration<double> elapsed = end - start;
+
         cout << "Определитель матрицы: " << determinant << endl;
-        cout << "\nВремя: " << elapsed.count();
+        cout << "Время вычисления: " << elapsed.count() << " секунд" << endl;
     }
     catch (const std::exception& e) {
         cerr << "Ошибка: " << e.what() << endl;

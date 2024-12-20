@@ -42,9 +42,23 @@ public:
 
     SparseMatrix submatrix(int delRow, int delCol) const;
 
-    double determinant() const;
+    double determinant();
+
+    void additionWithString(double value, int rowToAdd, int rowToSubtract);
+
+    SparseMatrix::NODE* getElement(int row, int col) const;
+
+    void multiplicationByNumber(double value, int row);
 
     void generateRandomMatrix(size_t n, int density);
+
+    SparseMatrix::NODE* findElement(int targetRow, int col);
+
+    void addElement(int targetRow, int col, double value);
+
+    void removeElement(int targetRow, int col);
+
+    void printMatrix();
     
     friend ostream& operator<<(ostream& os, const SparseMatrix& matrix);
 }; 
