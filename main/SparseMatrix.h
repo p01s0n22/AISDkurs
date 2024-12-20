@@ -59,6 +59,6 @@ public:
     void removeElement(int targetRow, int col);
 
     void printMatrix();
-    
+
     friend ostream& operator<<(ostream& os, const SparseMatrix& matrix);
-}; 
+};
