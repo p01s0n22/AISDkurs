@@ -77,79 +77,53 @@ void SparseMatrix::copyFrom(const SparseMatrix& other) {
 
 void SparseMatrix::add(double val, int row, int col) {
     if (val == 0) return;
-
     if (row >= size || col >= size || row < 0 || col < 0) {
-        throw std::out_of_range("Неверные координаты!");
+        throw std::out_of_range("Invalid coordinates");
     }
 
-    NODE* current = hRow[row];
-    if (current) {
-        do {
-            if (current->col == col) {
-                current->data = val; 
-                return;
-            }
-            current = current->nextright;
-        } while (current != hRow[row]);
-    }
+    // Работа с hRow
     NODE* newNode = new NODE(val, row, col);
-
     if (!hRow[row]) {
         hRow[row] = newNode;
-        newNode->nextright = newNode; 
+        newNode->nextright = nullptr;
     }
     else {
         NODE* current = hRow[row];
         NODE* prev = nullptr;
-        do {
-            if (current->col > col) break;
+        while (current && current->col < col) {
             prev = current;
             current = current->nextright;
-        } while (current != hRow[row]);
-
-        if (!prev) {
-            NODE* last = hRow[row];
-            while (last->nextright != hRow[row]) last = last->nextright;
-
-            newNode->nextright = hRow[row];
-            last->nextright = newNode;
-            hRow[row] = newNode;
+        }
+        if (prev) {
+            prev->nextright = newNode;
         }
         else {
-            prev->nextright = newNode;
-            newNode->nextright = current;
+            hRow[row] = newNode;
         }
+        newNode->nextright = current;
     }
 
+    // Работа с hCol
     if (!hCol[col]) {
         hCol[col] = newNode;
-        newNode->nextdown = newNode;
+        newNode->nextdown = nullptr;
     }
     else {
         NODE* current = hCol[col];
         NODE* prev = nullptr;
-        do {
-            if (current->row > row) break;
+        while (current && current->row < row) {
             prev = current;
             current = current->nextdown;
-        } while (current != hCol[col]);
-
-        if (!prev) {
-            NODE* last = hCol[col];
-            while (last->nextdown != hCol[col]) last = last->nextdown;
-
-            newNode->nextdown = hCol[col];
-            last->nextdown = newNode;
-            hCol[col] = newNode;
+        }
+        if (prev) {
+            prev->nextdown = newNode;
         }
         else {
-            prev->nextdown = newNode;
-            newNode->nextdown = current;
+            hCol[col] = newNode;
         }
+        newNode->nextdown = current;
     }
 }
-
-
 
 int SparseMatrix::get(int row, int col) const {
     if (row >= size || col >= size || row < 0 || col < 0) {
@@ -304,26 +278,23 @@ void SparseMatrix::swapRows(int row1, int row2) {
     if (row1 < 0 || row1 >= size || row2 < 0 || row2 >= size) {
         throw std::out_of_range("Row indices are out of range");
     }
-    // Меняем местами указатели на строки в массиве hRow
-    NODE* temp = hRow[row1];
-    hRow[row1] = hRow[row2];
-    hRow[row2] = temp;
-    // Обновляем номера строк в узлах столбцов
-    for (int i = 0; i < size; i++) {
+
+    std::swap(hRow[row1], hRow[row2]);
+
+    for (int i = 0; i < size; ++i) {
         NODE* current = hCol[i];
-        if (!current) continue;
-        NODE* start = current; // Начало кольцевого списка
-        do {
+        while (current) {
             if (current->row == row1) {
                 current->row = row2;
             }
             else if (current->row == row2) {
                 current->row = row1;
             }
-            current = current->nextright;
-        } while (current != start); // Проверяем на завершение обхода кольца
+            current = current->nextdown;
+        }
     }
 }
+
 
 SparseMatrix SparseMatrix::submatrix(int delRow, int delCol) const {
     if (delRow < 0 || delRow >= size || delCol < 0 || delCol >= size) {
@@ -357,33 +328,22 @@ double SparseMatrix::determinant() {
     int scalingFactor = 1; 
 
     for (int i = 0; i < size; ++i) {
-        std::cout << "qwerty" << endl;
-        NODE* pivotElement = A.getElement(i, i);  // Получаем ведущий элемент для строки i (элемент на главной диагонали)
-        std::cout << "AAA" << endl;
-        // Если ведущий элемент равен нулю, ищем строку ниже для обмена
+        NODE* pivotElement = A.getElement(i, i); 
         if (pivotElement == nullptr || pivotElement->data == 0) {
             bool found = false;  
-            // Ищем ненулевой элемент в столбце i (смотрим все строки ниже)
             for (int j = i + 1; j < size; ++j) {
-                // Если нашли ненулевой элемент в столбце i, меняем строки местами
                 if (A.getElement(j, i) != nullptr && A.getElement(j, i)->data != 0) {
-                    std::cout << "BBB" << endl;
-                    A.swapRows(i, j);  // Меняем строки i и j местами
-                    swapCount++;  // Увеличиваем счетчик перестановок
-                    found = true;  // Устанавливаем флаг в true, так как нашли строку для обмена
-                    std::cout << "CCC" << endl;
+                    A.swapRows(i, j); 
+                    swapCount++;  
+                    found = true;  
                     break;
                 }
             }
-            // Если не удалось найти строку с ненулевым элементом, определитель равен нулю
             if (!found) {
-                return 0;  // Возвращаем 0, так как матрица вырождена
+                return 0; 
             }
-            // Обновляем ведущий элемент после обмена строками
             pivotElement = A.getElement(i, i);
         }
-
-        // Приводим все элементы в столбце i ниже текущего ведущего элемента к нулю
         for (int j = i + 1; j < size; ++j) {
             NODE* targetElement = A.getElement(j, i);  // Элемент в строке j и столбце i
 
@@ -399,8 +359,6 @@ double SparseMatrix::determinant() {
             }
         }
     }
-
-    // Вычисляем определитель, умножая все элементы на главной диагонали
     for (int i = 0; i < size; ++i) {
         int diagElement = get(i, i);  // Элемент на главной диагонали
         if (diagElement != 0) {
@@ -409,13 +367,11 @@ double SparseMatrix::determinant() {
         
         else return 0;
     }
-    // Если количество перестановок нечетное, инвертируем знак определителя
     if (swapCount % 2 == 1) {
-        det = -det;  // Инвертируем знак, так как нечетное количество перестановок изменяет знак определителя
+        det = -det;  
     }
 
-    // Корректируем определитель с учетом масштабирующего коэффициента
-    det /= scalingFactor;  // Делаем окончательное деление, чтобы учесть возможные изменения, вызванные вычитанием строк
+    det /= scalingFactor;  
     std::cout << A << endl; 
     std::cout << scalingFactor << endl;
     return det;  
@@ -454,8 +410,6 @@ void SparseMatrix::additionWithFactor(int numerator, int targetRow, int pivotRow
         }
     } while (checkPivot != coefpivot);
 }
-
-
 
 //void SparseMatrix::additionWithString(int factor, int targetRow, int pivotRow) {
 //    NODE* pivotElement = hRow[pivotRow];  
