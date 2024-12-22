@@ -65,6 +65,7 @@ void SparseMatrix::copyFrom(const SparseMatrix& other) {
 
     hRow = new NODE * [size]();
     hCol = new NODE * [size]();
+
     for (int i = 0; i < size; i++) {
         NODE* current = other.hRow[i];
         NODE* start = current;
