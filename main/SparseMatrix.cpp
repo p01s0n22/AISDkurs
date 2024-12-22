@@ -23,11 +23,15 @@ SparseMatrix::~SparseMatrix() {
 void SparseMatrix::clear() {
     if (hRow != nullptr) {
         for (int i = 0; i < size; i++) {
-            NODE* current = hRow[i];
-            while (current != nullptr) {
-                NODE* temp = current;
-                current = current->nextright;
-                delete temp;
+            if (hRow[i])
+            {
+                NODE* current = hRow[i];
+                NODE* start = current;
+                do {
+                    NODE* temp = current;
+                    current = current->nextright;
+                    delete temp;
+                } while (current != start);
             }
         }
         delete[] hRow;  
@@ -51,10 +55,6 @@ SparseMatrix::SparseMatrix(const SparseMatrix& other) {
 
 SparseMatrix& SparseMatrix::operator=(const SparseMatrix& other) {
     if (this == &other) return *this;
-    clear();       
-    size = other.size;
-    hRow = new NODE * [size]();
-    hCol = new NODE * [size]();
     copyFrom(other); 
     return *this;
 }
@@ -448,6 +448,7 @@ double SparseMatrix::determinant() {
                     found = true;  
                     break;
                 }
+                std::cout << A << endl;
             }
             if (!found) {
                 return 0; 
