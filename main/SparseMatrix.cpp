@@ -78,11 +78,81 @@ void SparseMatrix::copyFrom(const SparseMatrix& other) {
 }
 
 void SparseMatrix::add(double val, int row, int col) {
-    if (val == 0) return;
     if (row >= size || col >= size || row < 0 || col < 0) {
         throw std::out_of_range("Invalid coordinates");
     }
+    // если устанавливаем 0 в существующий узел
+    if (val == 0)
+    {
+        if (hRow[row]) {
+            NODE* current = hRow[row];
+            NODE* prev = nullptr;
 
+            // Поиск узла в строке
+            do {
+                if (current->col == col) {
+                    // Удаляем узел
+                    if (prev) {
+                        prev->nextright = current->nextright;
+                    }
+                    else {
+                        // Удаляем первый узел
+                        if (current->nextright == current) {
+                            hRow[row] = nullptr; // Последний узел в строке
+                        }
+                        else {
+                            hRow[row] = current->nextright;
+
+                            // Находим последний элемент для обновления кольцевой связи
+                            NODE* last = hRow[row];
+                            while (last->nextright != current) {
+                                last = last->nextright;
+                            }
+                            last->nextright = hRow[row];
+                        }
+                    }
+                    break;
+                }
+                prev = current;
+                current = current->nextright;
+            } while (current != hRow[row]);
+        }
+
+        // Работа с hCol[col]
+        if (hCol[col]) {
+            NODE* current = hCol[col];
+            NODE* prev = nullptr;
+
+            // Поиск узла в столбце
+            do {
+                if (current->row == row) {
+                    // Удаляем узел
+                    if (prev) {
+                        prev->nextdown = current->nextdown;
+                    }
+                    else {
+                        // Удаляем первый узел
+                        if (current->nextdown == current) {
+                            hCol[col] = nullptr; // Последний узел в столбце
+                        }
+                        else {
+                            hCol[col] = current->nextdown;
+
+                            // Находим последний элемент для обновления кольцевой связи
+                            NODE* last = hCol[col];
+                            while (last->nextdown != current) {
+                                last = last->nextdown;
+                            }
+                            last->nextdown = hCol[col];
+                        }
+                    }
+                    break;
+                }
+                prev = current;
+                current = current->nextdown;
+            } while (current != hCol[col]);
+        }
+    }
     // Работа с hRow
     NODE* newNode = new NODE(val, row, col);
     if (!hRow[row]) {
@@ -383,6 +453,7 @@ double SparseMatrix::determinant() {
                 return 0; 
             }
             pivotElement = A.getElement(i, i);
+            std::cout << A << endl;
         }
         for (int j = i + 1; j < size; ++j) {
             NODE* targetElement = A.getElement(j, i);  // Элемент в строке j и столбце i
@@ -397,11 +468,11 @@ double SparseMatrix::determinant() {
                     scalingFactor *= pivotValue;  // Умножаем на ведущий элемент, чтобы учесть его в определителе
                 }
             }
+            std::cout << A << endl;
         }
     }
     for (int i = 0; i < size; ++i) {
         int diagElement = A.get(i, i);  // Элемент на главной диагонали
-        std::cout << diagElement << endl; 
         if (diagElement != 0) {
             det *= diagElement;  // Умножаем на диагональные элементы
         }
@@ -416,7 +487,7 @@ double SparseMatrix::determinant() {
     std::cout << A << endl; 
     std::cout <<"DETERMINANT " << det << endl;
     std::cout << scalingFactor << endl;
-    return det;  
+      return det;  
 }
 
 
@@ -435,17 +506,15 @@ void SparseMatrix::additionWithFactor(int numerator, int targetRow, int pivotRow
             }
             else {
                 targetElement -=  scaledValue;  // Обновляем значение
-                std::cout << "scalledValue " << scaledValue << endl;
-                std::cout << "target " << targetElement << endl;
-                add(targetElement, targetRow, pivotElement->col);
-                if (abs(targetElement) < 1e-10) {
-                    add(0, targetRow, pivotElement->col);  // Убираем элемент, если он близок к нулю
-                    
+                if (targetElement == 0)
+                {
+                    add(targetElement, targetRow, pivotElement->col);
                 }
+                add(targetElement, targetRow, pivotElement->col);
+                
             }
         pivotElement = pivotElement->nextright;  // Переходим к следующему элементу в главной строке 
     } while (checkPivot != pivotElement);
-    std::cout << *this  << endl;
 }
 
 //void SparseMatrix::additionWithString(int factor, int targetRow, int pivotRow) {
