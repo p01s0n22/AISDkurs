@@ -58,7 +58,7 @@ int main() {
     }
 
     cout << "Ваша разреженная матрица:" << endl;
-    //cout << mat << endl;
+    /*cout << mat << endl;*/
 
     try {
         auto start = high_resolution_clock::now();
