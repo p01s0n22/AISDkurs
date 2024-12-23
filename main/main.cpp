@@ -16,6 +16,7 @@ int main() {
     cout << "Выберите способ ввода матрицы:" << endl;
     cout << "1. Ввод полной матрицы вручную" << endl;
     cout << "2. Генерация случайной матрицы" << endl;
+    cout << "3. Генерация разреженной матрицы" << endl;
     cin >> choice;
 
     if (choice == 1) {
@@ -32,6 +33,19 @@ int main() {
 
         try {
             mat.generateRandomMatrix(size, density);
+        }
+        catch (const std::exception& e) {
+            cerr << "Ошибка: " << e.what() << endl;
+            return 1;
+        }
+    }
+    else if (choice == 3) {
+        int nonZero;
+
+        cout << "Введите количество ненулевых элементов: ";
+        cin >> nonZero;
+        try {
+            mat.RandomSparseMatrix(nonZero);
         }
         catch (const std::exception& e) {
             cerr << "Ошибка: " << e.what() << endl;

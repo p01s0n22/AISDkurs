@@ -46,17 +46,11 @@ public:
 
     void additionWithFactor(int numerator, int targetRow, int pivotRow);
 
-    /*void additionWithString(int value, int rowToAdd, int rowToSubtract);*/
-
     SparseMatrix::NODE* getElement(int row, int col) const;
 
     void multiplicationByNumber(int value, int row);
 
-    void generateRandomMatrix(size_t n, int density);
-
-    //SparseMatrix::NODE* findElement(int targetRow, int col);
-
-    /*void addElement(int targetRow, int col, int value);*/
-
+    void generateRandomMatrix(int n, int density);
+    void RandomSparseMatrix(int nonZeroElements);
     friend ostream& operator<<(ostream& os, const SparseMatrix& matrix);
 };

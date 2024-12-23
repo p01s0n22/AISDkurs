@@ -242,17 +242,15 @@ int SparseMatrix::get(int row, int col) const {
 
     NODE* current = hRow[row];
     if (!current) return 0;
-
-    while (current != nullptr) {
+    NODE* start = current;
+    do {
         if (current->col == col) {
             return current->data;  
         }
         current = current->nextright;
-    }
+    } while (start != current);
     return 0;  
 }
-
-
 
 void SparseMatrix::inputMatrix() {
     int n;
@@ -314,8 +312,6 @@ SparseMatrix SparseMatrix::operator+(const SparseMatrix& other) const {
     return result;
 }
 
-
-
 SparseMatrix SparseMatrix::operator-(const SparseMatrix& other) const {
     if (size != other.size) {
         throw std::invalid_argument("Matrix sizes do not match");
@@ -355,8 +351,6 @@ SparseMatrix SparseMatrix::operator-(const SparseMatrix& other) const {
     return result;
 }
 
-
-
 SparseMatrix SparseMatrix::operator*(const SparseMatrix& other) const {
     if (size != other.size) {
         throw std::invalid_argument("Matrix sizes do not match");
@@ -381,8 +375,6 @@ SparseMatrix SparseMatrix::operator*(const SparseMatrix& other) const {
     return result;
 }
 
-
-
 void SparseMatrix::swapRows(int row1, int row2) {
     if (row1 < 0 || row1 >= size || row2 < 0 || row2 >= size) {
         throw std::out_of_range("Row indices are out of range");
@@ -391,17 +383,20 @@ void SparseMatrix::swapRows(int row1, int row2) {
 
     for (int i = 0; i < size; ++i) {
         NODE* current = hCol[i];
-        NODE* start = current;
-        do {
-            if (current->row == row1) {
-                current->row = row2;
-            }
-            else if (current->row == row2) {
-                current->row = row1;
-            }
-            current = current->nextdown;
-            
-        } while (start != current);
+        if (current)
+        {
+            NODE* start = current;
+            do {
+                if (current->row == row1) {
+                    current->row = row2;
+                }
+                else if (current->row == row2) {
+                    current->row = row1;
+                }
+                current = current->nextdown;
+
+            } while (start != current);
+        }
     }
 }
 
@@ -438,6 +433,7 @@ double SparseMatrix::determinant() {
     int scalingFactor = 1; 
 
     for (int i = 0; i < size; ++i) {
+        if (!hRow[i] || !hCol[i]) return 0;
         NODE* pivotElement = A.getElement(i, i); 
         if (pivotElement == nullptr) {
             bool found = false;  
@@ -463,8 +459,9 @@ double SparseMatrix::determinant() {
                 int numerator = targetElement->data;  // Элемент, из которого будем вычитать
                 if (numerator != 0) {
                     A.multiplicationByNumber(pivotNumber, j);
-                    std::cout << A << endl;
+                    std::cout << "умножить " << j << "строку на" << pivotNumber << endl;
                     A.additionWithFactor(numerator, j, i);  
+                    std::cout << "вычесть из " << j << "строки " << i << "строку с коэффициентом " << numerator << endl;
                     int pivotValue = pivotElement->data;
                     scalingFactor *= pivotValue;  // Умножаем на ведущий элемент, чтобы учесть его в определителе
                 }
@@ -486,19 +483,20 @@ double SparseMatrix::determinant() {
 
     det /= scalingFactor;  
     std::cout << A << endl; 
-    std::cout <<"DETERMINANT " << det << endl;
     std::cout << scalingFactor << endl;
       return det;  
 }
 
-
-
 void SparseMatrix::additionWithFactor(int numerator, int targetRow, int pivotRow) {
+    
     NODE* pivotElement = getElement(pivotRow, pivotRow);  
+    
     if (!pivotElement) return; 
     NODE* checkPivot = getElement(pivotRow, pivotRow);
+    
     do {
             int targetElement = get(targetRow, pivotElement->col);
+
             int scaledValue = numerator * pivotElement->data;  // Масштабируем значение
             if (targetElement == 0) {
                 if (scaledValue != 0) {
@@ -507,39 +505,12 @@ void SparseMatrix::additionWithFactor(int numerator, int targetRow, int pivotRow
             }
             else {
                 targetElement -=  scaledValue;  // Обновляем значение
-                if (targetElement == 0)
-                {
-                    add(targetElement, targetRow, pivotElement->col);
-                }
                 add(targetElement, targetRow, pivotElement->col);
                 
             }
         pivotElement = pivotElement->nextright;  // Переходим к следующему элементу в главной строке 
     } while (checkPivot != pivotElement);
 }
-
-//void SparseMatrix::additionWithString(int factor, int targetRow, int pivotRow) {
-//    NODE* pivotElement = hRow[pivotRow];  
-//    while (pivotElement != nullptr) {
-//        NODE* targetElement = findElement(targetRow, pivotElement->col);
-//
-//        if (targetElement == nullptr) {
-//            if (factor * pivotElement->data != 0) {
-//                addElement(targetRow, pivotElement->col, -factor * pivotElement->data);
-//            }
-//        }
-//        else {
-//            targetElement->data -= factor * pivotElement->data;
-//            if (abs(targetElement->data) < 1e-10) {
-//                removeElement(targetRow, pivotElement->col);
-//            }
-//        }
-//        pivotElement = pivotElement->nextdown;
-//    }
-//
-//    std::cout << "После вычитания строки " << pivotRow << " с множителем " << factor << ":\n";
-//    printMatrix();  
-//}
 
 SparseMatrix::NODE* SparseMatrix::getElement(int row, int col) const {
     if (row >= size || row < 0 || col >= size || col < 0) {
@@ -565,54 +536,7 @@ void SparseMatrix::multiplicationByNumber(int value, int row) {
     } while (current != start);
 }
 
-//SparseMatrix::NODE* SparseMatrix::findElement(int targetRow, int col) {
-//    if (targetRow >= size || targetRow < 0 || col >= size || col < 0) {
-//        return nullptr;
-//    }
-//
-//    NODE* current = hRow[targetRow];
-//    while (current != nullptr) {
-//        if (current->col == col) {
-//            return current;
-//        }
-//        current = current->nextright;
-//    }
-//    return nullptr;
-//}
-
-//void SparseMatrix::addElement(int targetRow, int col, int value) {
-//    if (targetRow >= size || col >= size) return;
-//    NODE* newNode = new NODE(value, targetRow, col);
-//
-//    if (!hRow[targetRow] || hRow[targetRow]->col > col) {
-//        newNode->nextright = hRow[targetRow];
-//        hRow[targetRow] = newNode;
-//    }
-//    else {
-//        NODE* current = hRow[targetRow];
-//        while (current->nextright && current->nextright->col < col) {
-//            current = current->nextright;
-//        }
-//        newNode->nextright = current->nextright;
-//        current->nextright = newNode;
-//    }
-//
-//    if (!hCol[col] || hCol[col]->row > targetRow) {
-//        newNode->nextdown = hCol[col];
-//        hCol[col] = newNode;
-//    }
-//    else {
-//        NODE* current = hCol[col];
-//        while (current->nextdown && current->nextdown->row < targetRow) {
-//            current = current->nextdown;
-//        }
-//        newNode->nextdown = current->nextdown;
-//        current->nextdown = newNode;
-//    }
-//}
-
-
-void SparseMatrix::generateRandomMatrix(size_t n, int density) {
+void SparseMatrix::generateRandomMatrix(int n, int density) {
     size = n;
     hRow = new NODE * [n];
     hCol = new NODE * [n];
@@ -626,9 +550,36 @@ void SparseMatrix::generateRandomMatrix(size_t n, int density) {
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
             if (rand() % 100 < density) { 
-                double value = (rand() % 100) + 1;
+                int value = (rand() % 100) + 1;
                 add(value, i, j);
             }
+        }
+    }
+}
+
+void SparseMatrix::RandomSparseMatrix(int nonZeroElements) {
+    int n =  nonZeroElements*10;
+
+    // Устанавливаем размер матрицы.
+    size = n;
+    hRow = new NODE * [n];
+    hCol = new NODE * [n];
+    for (size_t i = 0; i < n; i++) {
+        hRow[i] = nullptr;
+        hCol[i] = nullptr;
+    }
+
+    srand(time(0));
+
+    while (nonZeroElements > 0) {
+        size_t i = rand() % n; // Случайная строка.
+        size_t j = rand() % n; // Случайный столбец.
+
+        // Проверяем, нет ли уже элемента в этой позиции.
+        if (!get(i, j)) {
+            int value = (rand() % 100) + 1;
+            add(value, i, j);
+            nonZeroElements--;
         }
     }
 }
