@@ -444,13 +444,11 @@ double SparseMatrix::determinant() {
                     found = true;  
                     break;
                 }
-                std::cout << A << endl;
             }
             if (!found) {
                 return 0; 
             }
             pivotElement = A.getElement(i, i);
-            std::cout << A << endl;
         }
         for (int j = i + 1; j < size; ++j) {
             NODE* targetElement = A.getElement(j, i);  // Элемент в строке j и столбце i
@@ -459,14 +457,11 @@ double SparseMatrix::determinant() {
                 int numerator = targetElement->data;  // Элемент, из которого будем вычитать
                 if (numerator != 0) {
                     A.multiplicationByNumber(pivotNumber, j);
-                    std::cout << "умножить " << j << "строку на" << pivotNumber << endl;
                     A.additionWithFactor(numerator, j, i);  
-                    std::cout << "вычесть из " << j << "строки " << i << "строку с коэффициентом " << numerator << endl;
                     int pivotValue = pivotElement->data;
                     scalingFactor *= pivotValue;  // Умножаем на ведущий элемент, чтобы учесть его в определителе
                 }
             }
-            std::cout << A << endl;
         }
     }
     for (int i = 0; i < size; ++i) {
@@ -482,8 +477,6 @@ double SparseMatrix::determinant() {
     }
 
     det /= scalingFactor;  
-    std::cout << A << endl; 
-    std::cout << scalingFactor << endl;
       return det;  
 }
 
@@ -517,13 +510,16 @@ SparseMatrix::NODE* SparseMatrix::getElement(int row, int col) const {
         return nullptr;
     }
     NODE* current = hRow[row];
-    NODE* start = current;
-    do {
-        if (current->col == col) {
-            return current;
-        }
-        current = current->nextright;
-    } while (current != start);
+    if (current)
+    {
+        NODE* start = current;
+        do {
+            if (current->col == col) {
+                return current;
+            }
+            current = current->nextright;
+        } while (current != start);
+    }
     return nullptr; 
 }
 
