@@ -23,7 +23,7 @@ int main() {
         mat.inputMatrix();
     }
     else if (choice == 2) {
-        size_t size;
+        unsigned size;
         int density;
 
         cout << "Введите размер матрицы: ";
@@ -62,7 +62,7 @@ int main() {
 
     try {
         auto start = high_resolution_clock::now();
-        int determinant = mat.determinant();
+        double determinant = mat.determinant();
         auto end = high_resolution_clock::now();
         duration<double> elapsed = end - start;
 
