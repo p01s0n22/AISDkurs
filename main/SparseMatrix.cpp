@@ -411,20 +411,21 @@ double SparseMatrix::determinant() {
     double det = 1;  
     int swapCount = 0; 
     int scalingFactor = 1; 
+    //for (int i = 0; i < A.size; ++i) {
+    //    if (!hCol[i])
+    //    {
+    //        for (int j = 0; j < A.size; ++j)
+    //        {
+    //            if (!hRow[j])
+    //            {
+    //                A = A.submatrix(j, i);
+    //                /*cout << A<<endl;*/
+    //            }
+    //        }
+    //    }
+    //}
     for (int i = 0; i < A.size; ++i) {
-        if (!hCol[i])
-        {
-            for (int j = 0; j < A.size; ++j)
-            {
-                if (!hRow[j])
-                {
-                    A = A.submatrix(j, i);
-                    /*cout << A<<endl;*/
-                }
-            }
-        }
-    }
-    for (int i = 0; i < A.size; ++i) {
+        if (!hCol[i] || !hRow) return 0;
         /*cout << A << endl;*/
         NODE* pivotElement = A.getElement(i, i); 
         if (pivotElement == nullptr) {
