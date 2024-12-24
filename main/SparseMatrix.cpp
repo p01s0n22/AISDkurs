@@ -258,8 +258,9 @@ SparseMatrix SparseMatrix::operator+(const SparseMatrix& other) const {
     for (int i = 0; i < size; i++) {
         NODE* thisRow = hRow[i];
         NODE* otherRow = other.hRow[i];
-
-        while (thisRow != nullptr || otherRow != nullptr) {
+        NODE* startThis = thisRow;
+        NODE* otherStart = otherRow;
+        do {
             if (thisRow == nullptr) {
                 result.add(otherRow->data, otherRow->row, otherRow->col);
                 otherRow = otherRow->nextright;
@@ -281,7 +282,7 @@ SparseMatrix SparseMatrix::operator+(const SparseMatrix& other) const {
                 result.add(otherRow->data, otherRow->row, otherRow->col);
                 otherRow = otherRow->nextright;
             }
-        }
+        }  while (thisRow != startThis || otherRow != otherStart);
     }
 
     return result;
@@ -297,8 +298,10 @@ SparseMatrix SparseMatrix::operator-(const SparseMatrix& other) const {
     for (int i = 0; i < size; i++) {
         NODE* thisRow = hRow[i];
         NODE* otherRow = other.hRow[i];
+        NODE* startThis = thisRow;
+        NODE* otherStart = otherRow;
 
-        while (thisRow != nullptr || otherRow != nullptr) {
+        do {
             if (thisRow == nullptr) {
                 result.add(-otherRow->data, otherRow->row, otherRow->col);
                 otherRow = otherRow->nextright;
@@ -320,7 +323,7 @@ SparseMatrix SparseMatrix::operator-(const SparseMatrix& other) const {
                 result.add(-otherRow->data, otherRow->row, otherRow->col);
                 otherRow = otherRow->nextright;
             }
-        }
+        } while (thisRow != startThis || otherRow != otherStart);
     }
 
     return result;
@@ -335,14 +338,15 @@ SparseMatrix SparseMatrix::operator*(const SparseMatrix& other) const {
 
     for (int i = 0; i < size; i++) {
         NODE* thisRow = hRow[i];
-        while (thisRow != nullptr) {
+        NODE* start = thisRow;
+        do {
             NODE* otherCol = other.hCol[thisRow->col];
             while (otherCol != nullptr) {
                 result.add(thisRow->data * otherCol->data, i, otherCol->row);
                 otherCol = otherCol->nextdown;
             }
             thisRow = thisRow->nextright;
-        }
+        } while (thisRow != start);
     }
 
     return result;
